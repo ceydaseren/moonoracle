@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moon Oracle</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a1f;
+    --bg2: #0f0f2e;
+    --bg3: #12122a;
+    --cyan: #1cd6e7;
+    --magenta: #f62bd1;
+    --purple: #8051c8;
+    --text: #e8e4f0;
+    --text-muted: #9b94b8;
+    --card-bg: rgba(255,255,255,0.04);
+    --card-border: rgba(255,255,255,0.08);
+    --glow-cyan: 0 0 40px rgba(28,214,231,0.15);
+    --glow-magenta: 0 0 40px rgba(246,43,209,0.12);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Stars background */
+  #stars-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .header-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 16px;
+    opacity: 0.8;
+  }
+
+  .header-title {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(38px, 8vw, 58px);
+    font-weight: 300;
+    line-height: 1.05;
+    background: linear-gradient(135deg, #e8e4f0 0%, var(--cyan) 50%, var(--magenta) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  .header-sub {
+    font-size: 15px;
+    color: var(--text-muted);
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* Date selector */
+  .date-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+
+  .date-label {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .date-input-wrap {
+    position: relative;
+  }
+
+  input[type="date"] {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 400;
+    padding: 14px 24px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    color-scheme: dark;
+    min-width: 220px;
+    text-align: center;
+  }
+
+  input[type="date"]:hover,
+  input[type="date"]:focus {
+    border-color: rgba(28,214,231,0.4);
+    box-shadow: 0 0 0 3px rgba(28,214,231,0.08), var(--glow-cyan);
+  }
+
+  .see-moon-btn {
+    background: linear-gradient(135deg, var(--purple), var(--magenta));
+    border: none;
+    border-radius: 100px;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    padding: 14px 36px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.3s;
+    box-shadow: 0 4px 24px rgba(128,81,200,0.3);
+  }
+
+  .see-moon-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(246,43,209,0.35);
+  }
+
+  .see-moon-btn:active { transform: translateY(0); }
+
+  /* Result section */
+  .result { display: none; }
+  .result.visible { display: block; animation: fadeUp 0.7s ease forwards; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Moon visual card */
+  .moon-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 40px 32px 36px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    position: relative;
+    overflow: visible;
+  }
+
+  .moon-card::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(128,81,200,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .moon-canvas-wrap {
+    position: relative;
+    width: 180px;
+    height: 180px;
+  }
+
+  .moon-halo {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(28,214,231,0.06) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+
+  canvas#moon { border-radius: 50%; display: block; }
+
+  .moon-phase-name {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .moon-phase-name span {
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-style: italic;
+  }
+
+  .moon-date-display {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .illumination-bar-wrap {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .illumination-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  .illumination-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .illumination-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--purple), var(--cyan));
+    border-radius: 100px;
+    transition: width 0.8s cubic-bezier(0.23,1,0.32,1);
+  }
+
+  /* Info cards */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 560px) {
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+
+  .info-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 24px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .info-card.full { grid-column: 1 / -1; }
+
+  .info-card-icon {
+    font-size: 22px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .info-card-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .info-card-title {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.25;
+  }
+
+  .info-card-body {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  .info-card.energy { border-color: rgba(28,214,231,0.18); }
+  .info-card.energy::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; right: -20px;
+    width: 80px; height: 80px;
+    background: radial-gradient(circle, rgba(28,214,231,0.12), transparent 70%);
+  }
+
+  .info-card.action { border-color: rgba(246,43,209,0.18); }
+  .info-card.action::after {
+    content: '';
+    position: absolute;
+    top: -20px; left: -20px;
+    width: 80px; height: 80px;
+    background: radial-gradient(circle, rgba(246,43,209,0.1), transparent 70%);
+  }
+
+  .info-card.month { border-color: rgba(128,81,200,0.22); }
+  .info-card.month::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; right: -20px;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, rgba(128,81,200,0.1), transparent 70%);
+  }
+
+  .affirmation-card {
+    background: linear-gradient(135deg, rgba(128,81,200,0.1) 0%, rgba(28,214,231,0.06) 100%);
+    border: 1px solid rgba(128,81,200,0.25);
+    border-radius: 18px;
+    padding: 28px 24px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .affirmation-card p {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.55;
+  }
+
+  .affirmation-card .affirmation-label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 12px;
+    display: block;
+    opacity: 0.8;
+  }
+
+  /* Phase strip */
+  .phase-strip {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 20px 18px;
+    margin-bottom: 16px;
+  }
+
+  .phase-strip-label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  .phase-dots {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .phase-dot-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .phase-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .phase-dot.active {
+    border-color: var(--cyan);
+    box-shadow: 0 0 12px rgba(28,214,231,0.4);
+  }
+
+  .phase-dot-name {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: 0.03em;
+  }
+
+  .phase-dot.active .phase-dot-name { color: var(--cyan); }
+
+  /* Celestial decorations */
+  .celestial-planet {
+    position: fixed;
+    width: 90px; height: 90px;
+    right: 4vw; top: 18vh;
+    pointer-events: none;
+    z-index: 0;
+    animation: float 14s ease-in-out infinite;
+  }
+
+  .celestial-planet svg { width: 100%; height: 100%; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(-8deg); }
+    50%       { transform: translateY(-18px) rotate(-4deg); }
+  }
+
+  .celestial-comet {
+    position: fixed;
+    left: 3vw; bottom: 22vh;
+    pointer-events: none;
+    z-index: 0;
+    font-size: 28px;
+    opacity: 0.18;
+    animation: cometdrift 20s ease-in-out infinite;
+    filter: blur(0.5px);
+  }
+
+  @keyframes cometdrift {
+    0%, 100% { transform: translate(0,0) rotate(-30deg); opacity: 0.12; }
+    50%       { transform: translate(8px, -12px) rotate(-28deg); opacity: 0.2; }
+  }
+
+  .celestial-glyph-fixed {
+    position: fixed;
+    pointer-events: none;
+    z-index: 0;
+    font-size: 22px;
+    color: rgba(180,140,255,0.12);
+    animation: glyphpulse 8s ease-in-out infinite;
+  }
+
+  @keyframes glyphpulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50%       { opacity: 1; transform: scale(1.08); }
+  }
+
+  /* Orbit ring around moon card */
+  .moon-orbit {
+    position: absolute;
+    width: 240px; height: 240px;
+    border: 1px solid rgba(28,214,231,0.08);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: orbitSpin 40s linear infinite;
+  }
+
+  .moon-orbit::after {
+    content: '✦';
+    position: absolute;
+    top: -6px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--cyan);
+    opacity: 0.6;
+  }
+
+  .moon-orbit-2 {
+    position: absolute;
+    width: 290px; height: 290px;
+    border: 1px dashed rgba(128,81,200,0.07);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: orbitSpin 70s linear infinite reverse;
+  }
+
+  @keyframes orbitSpin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  /* Lunar phase card gets starfield shimmer */
+  .moon-card {
+    overflow: visible !important;
+  }
+
+  /* Divider with celestial motif */
+  .celestial-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 16px;
+    opacity: 0.35;
+  }
+
+  .celestial-divider span {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(128,81,200,0.6), transparent);
+  }
+
+  .celestial-divider i {
+    font-size: 14px;
+    color: var(--purple);
+  }
+
+    text-align: center;
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid var(--card-border);
+  }
+
+  .footer p {
+    font-size: 12px;
+    color: var(--text-muted);
+    opacity: 0.5;
+    letter-spacing: 0.05em;
+  }
+
+  .footer .watermark {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    color: var(--text-muted);
+    opacity: 0.6;
+    margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+<canvas id="stars-canvas"></canvas>
+
+<!-- Floating ringed planet -->
+<div class="celestial-planet">
+  <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="pg" cx="38%" cy="35%">
+        <stop offset="0%" stop-color="#c8a0f8"/>
+        <stop offset="50%" stop-color="#7040b0"/>
+        <stop offset="100%" stop-color="#2a1050"/>
+      </radialGradient>
+    </defs>
+    <!-- Ring shadow -->
+    <ellipse cx="45" cy="52" rx="38" ry="8" fill="none" stroke="rgba(100,60,180,0.25)" stroke-width="5"/>
+    <!-- Planet body -->
+    <circle cx="45" cy="45" r="22" fill="url(#pg)"/>
+    <!-- Ring front -->
+    <ellipse cx="45" cy="48" rx="38" ry="8" fill="none" stroke="rgba(180,120,255,0.35)" stroke-width="3.5"/>
+    <ellipse cx="45" cy="48" rx="32" ry="6" fill="none" stroke="rgba(200,150,255,0.18)" stroke-width="2"/>
+    <!-- Atmosphere shimmer -->
+    <ellipse cx="39" cy="38" rx="8" ry="5" fill="rgba(255,255,255,0.07)" transform="rotate(-20,39,38)"/>
+  </svg>
+</div>
+
+<!-- Comet -->
+<div class="celestial-comet">☄️</div>
+
+<!-- Fixed zodiac glyphs -->
+<div class="celestial-glyph-fixed" style="left:2vw;top:45vh;animation-delay:-2s">♋</div>
+<div class="celestial-glyph-fixed" style="right:2vw;bottom:35vh;animation-delay:-5s">♓</div>
+<div class="celestial-glyph-fixed" style="left:5vw;top:75vh;animation-delay:-9s;font-size:16px">♑</div>
+<div class="celestial-glyph-fixed" style="right:6vw;top:55vh;animation-delay:-3s;font-size:18px">♒</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-eyebrow">✦ &nbsp; ☽ &nbsp; ✦</div>
+    <h1 class="header-title">Moon Oracle</h1>
+    <p class="header-sub">Discover the moon energy available to you on any date<br>and how to work with it intentionally.</p>
+  </div>
+
+  <div class="date-section">
+    <label class="date-label" for="date-input">Choose a date</label>
+    <input type="date" id="date-input">
+    <button class="see-moon-btn" onclick="readTheMoon()">Read the Moon ✦</button>
+  </div>
+
+  <div class="result" id="result">
+    <div class="moon-card">
+      <div class="moon-orbit"></div>
+      <div class="moon-orbit-2"></div>
+      <div class="moon-canvas-wrap">
+        <div class="moon-halo"></div>
+        <canvas id="moon" width="180" height="180"></canvas>
+      </div>
+      <div>
+        <div class="moon-date-display" id="date-display"></div>
+      </div>
+      <div class="moon-phase-name" id="phase-name"></div>
+      <div class="illumination-bar-wrap">
+        <div class="illumination-label">
+          <span>Illumination</span>
+          <span id="illum-pct">0%</span>
+        </div>
+        <div class="illumination-bar">
+          <div class="illumination-fill" id="illum-fill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase strip -->
+    <div class="phase-strip">
+      <div class="phase-strip-label">The 8 phases of the lunar cycle</div>
+      <div class="phase-dots" id="phase-dots"></div>
+    </div>
+
+    <!-- Cards -->
+    <div class="cards-grid">
+      <div class="info-card energy">
+        <span class="info-card-icon">🌊</span>
+        <div class="info-card-label">Energetic Quality</div>
+        <div class="info-card-title" id="energy-title"></div>
+        <div class="info-card-body" id="energy-body"></div>
+      </div>
+      <div class="info-card action">
+        <span class="info-card-icon">✨</span>
+        <div class="info-card-label">What to Do Now</div>
+        <div class="info-card-title" id="action-title"></div>
+        <div class="info-card-body" id="action-body"></div>
+      </div>
+      <div class="info-card full month">
+        <span class="info-card-icon" id="month-icon"></span>
+        <div class="info-card-label" id="month-label"></div>
+        <div class="info-card-title" id="month-title"></div>
+        <div class="info-card-body" id="month-body"></div>
+      </div>
+    </div>
+
+    <div class="affirmation-card">
+      <span class="affirmation-label">✦ Moon Mantra ✦</span>
+      <p id="affirmation"></p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="watermark">© Ceyda Seren. All rights reserved.</div>
+  </div>
+</div>
+
+<script>
+// ── Celestial Background ──────────────────────────────────────────────────────
+(function() {
+  const c = document.getElementById('stars-canvas');
+  const ctx = c.getContext('2d');
+  let stars = [], shooters = [], nebulae = [], constellations = [], t = 0;
+
+  // Zodiac glyphs to scatter subtly
+  const GLYPHS = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  let glyphs = [];
+
+  // Fixed constellation patterns (relative coords, will be placed randomly)
+  const CONST_PATTERNS = [
+    // Orion-like: 7 stars
+    [[0,0],[40,15],[80,5],[20,40],[60,45],[10,70],[70,75]],
+    // Dipper-like: 7 stars
+    [[0,0],[30,10],[60,5],[90,0],[75,30],[45,35],[20,25]],
+    // Small cross: 5 stars
+    [[20,0],[20,20],[0,20],[40,20],[20,40]],
+    // Triangle: 3 stars
+    [[0,40],[40,0],[80,40]],
+  ];
+
+  function resize() {
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
+    init();
+  }
+
+  function init() {
+    // Stars — three tiers: tiny dim, medium, rare bright with cross-spike
+    stars = [];
+    const count = Math.floor((c.width * c.height) / 2200);
+    for (let i = 0; i < count; i++) {
+      const tier = Math.random() < 0.6 ? 0 : Math.random() < 0.8 ? 1 : 2;
+      stars.push({
+        x: Math.random() * c.width,
+        y: Math.random() * c.height,
+        r: tier === 0 ? Math.random() * 0.6 + 0.2 : tier === 1 ? Math.random() * 0.9 + 0.5 : Math.random() * 1.2 + 1,
+        baseAlpha: tier === 0 ? Math.random() * 0.35 + 0.1 : tier === 1 ? Math.random() * 0.5 + 0.2 : Math.random() * 0.6 + 0.35,
+        twinkleSpeed: Math.random() * 0.006 + 0.001,
+        twinklePhase: Math.random() * Math.PI * 2,
+        tier,
+        // Colour tint: mostly white, some blue-white, rare warm
+        hue: Math.random() < 0.15 ? 'b' : Math.random() < 0.08 ? 'w' : 'n'
+      });
+    }
+
+    // Shooting stars pool
+    shooters = [];
+    for (let i = 0; i < 3; i++) spawnShooter();
+
+    // Nebula wisps — soft radial blobs in corners / edges
+    nebulae = [
+      { x: c.width * 0.08,  y: c.height * 0.12, r: c.width * 0.22, color: '128,81,200',  a: 0.045 },
+      { x: c.width * 0.92,  y: c.height * 0.08, r: c.width * 0.18, color: '28,214,231',   a: 0.03  },
+      { x: c.width * 0.85,  y: c.height * 0.75, r: c.width * 0.25, color: '246,43,209',   a: 0.035 },
+      { x: c.width * 0.05,  y: c.height * 0.82, r: c.width * 0.2,  color: '80,40,160',    a: 0.04  },
+      { x: c.width * 0.5,   y: c.height * 0.05, r: c.width * 0.3,  color: '20,10,60',     a: 0.06  },
+    ];
+
+    // Constellations
+    constellations = [];
+    for (let i = 0; i < 4; i++) {
+      const pat = CONST_PATTERNS[i % CONST_PATTERNS.length];
+      const ox = Math.random() * (c.width * 0.7) + c.width * 0.05;
+      const oy = Math.random() * (c.height * 0.6) + c.height * 0.05;
+      const scale = 0.6 + Math.random() * 0.9;
+      const alpha = 0.06 + Math.random() * 0.08;
+      constellations.push({ pat, ox, oy, scale, alpha });
+    }
+
+    // Zodiac glyphs — scattered, very faint
+    glyphs = [];
+    for (let i = 0; i < 8; i++) {
+      glyphs.push({
+        g: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
+        x: Math.random() * c.width,
+        y: Math.random() * c.height,
+        size: 10 + Math.random() * 14,
+        alpha: 0.04 + Math.random() * 0.07,
+        twinklePhase: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.003 + 0.001,
+      });
+    }
+  }
+
+  function spawnShooter() {
+    const side = Math.random();
+    let sx, sy, angle;
+    if (side < 0.5) {
+      sx = Math.random() * c.width; sy = 0; angle = (Math.PI / 4) + Math.random() * (Math.PI / 4);
+    } else {
+      sx = 0; sy = Math.random() * c.height * 0.5; angle = -(Math.PI / 6) + Math.random() * (Math.PI / 3);
+    }
+    const speed = 6 + Math.random() * 10;
+    shooters.push({
+      x: sx, y: sy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      len: 60 + Math.random() * 100,
+      alpha: 0,
+      maxAlpha: 0.55 + Math.random() * 0.35,
+      life: 0,
+      maxLife: 60 + Math.random() * 60,
+      delay: Math.random() * 600  // frames before this one activates
+    });
+  }
+
+  function drawStar(x, y, r, alpha, hue) {
+    let color;
+    if (hue === 'b') color = `rgba(180,220,255,${alpha})`;
+    else if (hue === 'w') color = `rgba(255,240,200,${alpha})`;
+    else color = `rgba(255,255,255,${alpha})`;
+
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Cross spike for bright stars
+    if (r > 1.5 && alpha > 0.5) {
+      const spikeLen = r * 3.5;
+      ctx.strokeStyle = color.replace(/[\d.]+\)$/, `${alpha * 0.35})`);
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(x - spikeLen, y); ctx.lineTo(x + spikeLen, y);
+      ctx.moveTo(x, y - spikeLen); ctx.lineTo(x, y + spikeLen);
+      ctx.stroke();
+    }
+  }
+
+  function draw(ts) {
+    t = ts * 0.001;
+    ctx.clearRect(0, 0, c.width, c.height);
+
+    // Nebula wisps
+    nebulae.forEach(n => {
+      const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+      g.addColorStop(0, `rgba(${n.color},${n.a})`);
+      g.addColorStop(0.4, `rgba(${n.color},${n.a * 0.4})`);
+      g.addColorStop(1, `rgba(${n.color},0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, c.width, c.height);
+    });
+
+    // Constellation lines + stars
+    constellations.forEach(con => {
+      const pts = con.pat.map(p => [con.ox + p[0] * con.scale, con.oy + p[1] * con.scale]);
+      // Lines
+      ctx.strokeStyle = `rgba(180,160,255,${con.alpha * 0.5})`;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      pts.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p[0], p[1]);
+        else ctx.lineTo(p[0], p[1]);
+      });
+      ctx.stroke();
+      // Dots
+      pts.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], 1.2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(200,185,255,${con.alpha * 1.4})`;
+        ctx.fill();
+      });
+    });
+
+    // Regular stars
+    stars.forEach(s => {
+      const a = s.baseAlpha * (0.6 + 0.4 * Math.sin(t * s.twinkleSpeed * 1000 + s.twinklePhase));
+      drawStar(s.x, s.y, s.r, a, s.hue);
+    });
+
+    // Zodiac glyphs
+    glyphs.forEach(g => {
+      const a = g.alpha * (0.6 + 0.4 * Math.sin(t * g.twinkleSpeed * 1000 + g.twinklePhase));
+      ctx.font = `${g.size}px serif`;
+      ctx.fillStyle = `rgba(180,160,255,${a})`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(g.g, g.x, g.y);
+    });
+
+    // Shooting stars
+    shooters.forEach((s, idx) => {
+      s.delay--;
+      if (s.delay > 0) return;
+      s.life++;
+      const progress = s.life / s.maxLife;
+      s.alpha = progress < 0.2 ? s.maxAlpha * (progress / 0.2)
+               : progress > 0.7 ? s.maxAlpha * (1 - (progress - 0.7) / 0.3)
+               : s.maxAlpha;
+      s.x += s.vx; s.y += s.vy;
+
+      if (s.alpha > 0.01) {
+        const tailX = s.x - s.vx * (s.len / Math.hypot(s.vx, s.vy));
+        const tailY = s.y - s.vy * (s.len / Math.hypot(s.vx, s.vy));
+        const grad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
+        grad.addColorStop(0, `rgba(255,255,255,0)`);
+        grad.addColorStop(0.6, `rgba(200,230,255,${s.alpha * 0.4})`);
+        grad.addColorStop(1, `rgba(255,255,255,${s.alpha})`);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(tailX, tailY);
+        ctx.lineTo(s.x, s.y);
+        ctx.stroke();
+      }
+
+      if (s.life >= s.maxLife) {
+        shooters[idx] = null;
+      }
+    });
+    shooters = shooters.filter(Boolean);
+    // Replenish
+    while (shooters.length < 3) spawnShooter();
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(draw);
+})();
+
+// ── Moon phase calculation ────────────────────────────────────────────────────
+function getMoonData(date) {
+  // Known new moon reference: Jan 6, 2000
+  const known = new Date('2000-01-06T18:14:00Z');
+  const synodicMonth = 29.53058867;
+  const diff = (date - known) / (1000 * 60 * 60 * 24);
+  let age = diff % synodicMonth;
+  if (age < 0) age += synodicMonth;
+
+  const illumination = 50 - 50 * Math.cos((age / synodicMonth) * 2 * Math.PI);
+  const isWaxing = age < synodicMonth / 2;
+
+  let phaseIndex;
+  const p = age / synodicMonth;
+  if      (p < 0.0625 || p >= 0.9375) phaseIndex = 0; // New Moon
+  else if (p < 0.1875)                phaseIndex = 1; // Waxing Crescent
+  else if (p < 0.3125)                phaseIndex = 2; // First Quarter
+  else if (p < 0.4375)                phaseIndex = 3; // Waxing Gibbous
+  else if (p < 0.5625)                phaseIndex = 4; // Full Moon
+  else if (p < 0.6875)                phaseIndex = 5; // Waning Gibbous
+  else if (p < 0.8125)                phaseIndex = 6; // Last Quarter
+  else                                phaseIndex = 7; // Waning Crescent
+
+  return { age, illumination, phaseIndex, isWaxing };
+}
+
+const PHASES = [
+  {
+    name: 'New Moon',
+    emoji: '🌑',
+    energy_title: 'Fertile Darkness & New Beginnings',
+    energy_body: 'The slate is clean. This is the void before creation — potent, still, and full of potential. The universe is listening for what you want to call in.',
+    action_title: 'Plant your seeds',
+    action_body: 'Set clear intentions. Journal what you wish to create, feel, or become in the cycle ahead. This is the most powerful time to decide your next timeline.',
+    affirmation: '"I am open to new beginnings. I plant my intentions in fertile ground and trust the universe to grow them into form."'
+  },
+  {
+    name: 'Waxing Crescent',
+    emoji: '🌒',
+    energy_title: 'Stirring Energy & Early Momentum',
+    energy_body: 'The first light appears. Your intentions are taking root beneath the surface. There is a quiet building of energy — like a breath before a leap.',
+    action_title: 'Take inspired first steps',
+    action_body: 'Act on the intentions you set. Small aligned actions now compound powerfully. Trust the pulls you feel even if the whole path isn\'t visible.',
+    affirmation: '"Every small step I take is building the life I have chosen. I trust the momentum that is already in motion."'
+  },
+  {
+    name: 'First Quarter',
+    emoji: '🌓',
+    energy_title: 'Action, Decision & Commitment',
+    energy_body: 'Tension meets opportunity. This is the halfway point between wish and fullness — a push to overcome inertia and commit. The energy is dynamic and activating.',
+    action_title: 'Face what is holding you back',
+    action_body: 'Notice resistance and move through it anyway. Decisions made now gain power. What do you need to choose to stay on your chosen timeline?',
+    affirmation: '"I choose my timeline boldly. I face challenges as proof of my expansion, not signs to retreat."'
+  },
+  {
+    name: 'Waxing Gibbous',
+    emoji: '🌔',
+    energy_title: 'Refinement & Magnetism Rising',
+    energy_body: 'You are almost there. The energy is building to a peak — magnetic, refining, pulling your desires closer. This is a time of fine-tuning and elevated vibration.',
+    action_title: 'Adjust and elevate',
+    action_body: 'Refine your approach. Do your practices with presence. Embody the version of you who already has what you\'re calling in. Feel it fully.',
+    affirmation: '"I am becoming more magnetic with every breath. What I desire is moving toward me as I align myself to receive it."'
+  },
+  {
+    name: 'Full Moon',
+    emoji: '🌕',
+    energy_title: 'Peak Illumination & Manifestation',
+    energy_body: 'Everything is lit. The full moon reveals what has been growing in the shadows — both blessings and what is no longer aligned. Emotions run high; sensitivity is heightened.',
+    action_title: 'Celebrate & release',
+    action_body: 'Acknowledge how far you\'ve come. Release what is complete. Charge your crystals, cleanse your space, and let yourself feel the fullness of where you are.',
+    affirmation: '"I am in full bloom. I release all that is complete and I open my hands to receive the abundance that is already mine."'
+  },
+  {
+    name: 'Waning Gibbous',
+    emoji: '🌖',
+    energy_title: 'Integration & Gratitude',
+    energy_body: 'The peak has passed and wisdom is settling in. This is a time to integrate the gifts of the full moon cycle — to give back, share, and deepen understanding.',
+    action_title: 'Share and reflect',
+    action_body: 'What have you learned this cycle? Share your gifts, offer your insights to others, and practice deep gratitude for what has manifested.',
+    affirmation: '"I am grateful for all that has come. I integrate my growth and share my light freely with the world."'
+  },
+  {
+    name: 'Last Quarter',
+    emoji: '🌗',
+    energy_title: 'Surrender & Conscious Release',
+    energy_body: 'The energy turns inward and backward. This is the sacred art of letting go — releasing patterns, relationships, beliefs, and identities that no longer belong on your next timeline.',
+    action_title: 'Let go intentionally',
+    action_body: 'Write a release list. What are you ready to leave behind? Limiting beliefs, old stories, outdated versions of yourself. Consciously choose to unhook.',
+    affirmation: '"I release with love and ease. What no longer serves me dissolves and makes space for what I am becoming."'
+  },
+  {
+    name: 'Waning Crescent',
+    emoji: '🌘',
+    energy_title: 'Rest, Reset & Inner Wisdom',
+    energy_body: 'The cycle is completing. This is the most restorative phase — a call to rest deeply, go inward, and allow the void to restore you before the next new beginning.',
+    action_title: 'Rest and receive',
+    action_body: 'Slow down. Dream. Meditate. Listen to your intuition without the pressure to act. Your inner knowing is loudest now. Trust the whispers.',
+    affirmation: '"I honour the sacred pause. In stillness I receive. In rest I prepare for the magnificent new cycle that is coming."'
+  }
+];
+
+const MONTHS = [
+  { name: 'January', icon: '❄️', title: 'Wolf Moon — Clarity & Vision', body: 'The wolf howls under the winter sky, calling you to define what you truly hunger for this year. January asks for bold, clear vision. Set your highest intentions for the full year ahead.' },
+  { name: 'February', icon: '🌱', title: 'Snow Moon — Patience & Preparation', body: 'Beneath the frozen ground, seeds wait patiently for spring. February is about trusting the unseen process. The work you do internally now will bloom magnificently later.' },
+  { name: 'March', icon: '🌸', title: 'Worm Moon — Rebirth & Emergence', body: 'The earth stirs and life returns. March carries the energy of resurrection — emerging from winter\'s cocoon as a newly formed version of yourself. Honour your own becoming.' },
+  { name: 'April', icon: '🌦️', title: 'Pink Moon — Growth Through Challenge', body: 'April showers invite growth you didn\'t plan for. The tensions of this month are actually accelerators. Let what is uncomfortable stretch you open rather than close you down.' },
+  { name: 'May', icon: '🌺', title: 'Flower Moon — Abundance & Blossoming', body: 'May is one of the most abundant months in the lunar calendar. Everything you\'ve been cultivating is ready to bloom. Say yes to expansion, beauty, and receiving more than you asked for.' },
+  { name: 'June', icon: '☀️', title: 'Strawberry Moon — Sweetness & Fruition', body: 'The first harvest arrives and invites you to taste the sweetness of your own efforts. June reminds you to savour life now — not when conditions are perfect, but exactly as things are.' },
+  { name: 'July', icon: '🦌', title: 'Buck Moon — Strength & Renewal', body: 'The buck\'s antlers grow strong and purposeful. July is about coming into your full power — stepping into leadership, owning your gifts, and shedding what weakened you.' },
+  { name: 'August', icon: '🌾', title: 'Sturgeon Moon — Harvest & Acknowledgment', body: 'Late summer calls for acknowledgment of all you have built. August asks you to take stock, celebrate your growth, and prepare for the deeper inner work of autumn ahead.' },
+  { name: 'September', icon: '🍂', title: 'Harvest Moon — Reaping What You Sowed', body: 'The harvest moon illuminates exactly what your energy created this year. September is deeply clarifying — you see what aligned actions grew and where energy was scattered. Receive both lessons with grace.' },
+  { name: 'October', icon: '🎃', title: 'Hunter\'s Moon — Depth & Shadow Work', body: 'The veil thins and the deep truths surface. October is the most powerful month for shadow work — meeting your own darkness with compassion, integrating what you\'ve been avoiding.' },
+  { name: 'November', icon: '🌫️', title: 'Beaver Moon — Fortitude & Preparation', body: 'The beaver builds its den before winter arrives. November asks you to strengthen your inner foundation — your mindset, your nervous system, your sacred practices — to sustain you through darker days.' },
+  { name: 'December', icon: '⭐', title: 'Cold Moon — Completion & Sacred Rest', body: 'The year completes itself under a cold, crystalline sky. December is a time of profound stillness, deep gratitude, and releasing the entire cycle with love. You have earned your rest.' }
+];
+
+// ── Draw moon ─────────────────────────────────────────────────────────────────
+function drawMoon(illumination, isWaxing) {
+  const canvas = document.getElementById('moon');
+  const ctx = canvas.getContext('2d');
+  const W = 180, H = 180, R = 82;
+  const cx = W / 2, cy = H / 2;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Glow
+  const glowR = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R * 1.3);
+  glowR.addColorStop(0, 'rgba(28,214,231,0.0)');
+  glowR.addColorStop(1, 'rgba(28,214,231,0.0)');
+  ctx.fillStyle = glowR;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R * 1.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Dark side (space)
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.fillStyle = '#060614';
+  ctx.fill();
+
+  // Lit surface texture (subtle craters)
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Moon surface gradient
+  const surfGrad = ctx.createRadialGradient(cx - 18, cy - 18, 5, cx, cy, R);
+  surfGrad.addColorStop(0, '#f0ede8');
+  surfGrad.addColorStop(0.5, '#d4cfbf');
+  surfGrad.addColorStop(1, '#a09a8a');
+  ctx.fillStyle = surfGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Craters
+  const craters = [
+    {x: cx-20, y: cy+18, r: 10, d: 0.5},
+    {x: cx+28, y: cy-22, r: 7, d: 0.4},
+    {x: cx-35, y: cy-8, r: 5, d: 0.3},
+    {x: cx+10, y: cy+32, r: 8, d: 0.4},
+    {x: cx+35, y: cy+15, r: 4, d: 0.25},
+    {x: cx-10, y: cy-38, r: 6, d: 0.35}
+  ];
+  craters.forEach(c => {
+    const cg = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+    cg.addColorStop(0, `rgba(80,75,65,${c.d})`);
+    cg.addColorStop(0.7, `rgba(120,115,100,${c.d * 0.5})`);
+    cg.addColorStop(1, 'rgba(200,195,180,0)');
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+    ctx.fillStyle = cg;
+    ctx.fill();
+  });
+
+  ctx.restore();
+
+  // ── Phase: paint using ImageData scanlines (pixel-perfect, no path tricks) ──
+  // For each row y, we know:
+  //   circle boundary: x spans [cx - hw, cx + hw] where hw = sqrt(R²-(y-cy)²)
+  //   terminator x at this row: xt = cx + tx * sqrt(1 - ((y-cy)/R)²)
+  //     where tx = R * cos(phase_angle), signed:
+  //       waxing crescent: tx > 0  (terminator bulges right, lit sliver on right)
+  //       waxing gibbous:  tx < 0  (terminator bulges left,  large lit on right)
+  //       waning gibbous:  tx > 0  (terminator bulges right, large lit on left)
+  //       waning crescent: tx < 0  (terminator bulges left,  lit sliver on left)
+  //
+  //   Lit region per row:
+  //     waxing: x in [xt, cx+hw]   (right of terminator)
+  //     waning: x in [cx-hw, xt]   (left of terminator)
+
+  const illum = illumination / 100;
+  const imgData = ctx.getImageData(0, 0, W, H);
+  const d = imgData.data;
+
+  // Moon surface color (used to restore lit pixels that craters may have altered)
+  const DARK = [6, 6, 20];
+
+  if (illum <= 0.005) {
+    // New moon: darken everything inside circle
+    for (let py = 0; py < H; py++) {
+      const dy = py - cy;
+      const hw = Math.sqrt(Math.max(0, R * R - dy * dy));
+      const x0 = Math.ceil(cx - hw), x1 = Math.floor(cx + hw);
+      for (let px = x0; px <= x1; px++) {
+        const i = (py * W + px) * 4;
+        d[i]=DARK[0]; d[i+1]=DARK[1]; d[i+2]=DARK[2]; d[i+3]=255;
+      }
+    }
+  } else if (illum < 0.995) {
+    const pa = Math.acos(Math.max(-1, Math.min(1, 1 - 2 * illum)));
+    // tx: signed terminator offset. Positive = terminator centre is to the right of moon centre.
+    // Waxing: terminator is the left boundary of the lit zone → tx = +R*cos(pa) moves right as illum→0.5
+    // Waning: terminator is the right boundary of the lit zone → tx = -R*cos(pa)
+    const tx = R * Math.cos(pa) * (isWaxing ? 1 : -1);
+
+    for (let py = 0; py < H; py++) {
+      const dy = py - cy;
+      if (Math.abs(dy) > R) continue;
+      const hw = Math.sqrt(Math.max(0, R * R - dy * dy));
+      const circleLeft  = cx - hw;
+      const circleRight = cx + hw;
+      // Terminator x at this row
+      const xt = cx + tx * Math.sqrt(Math.max(0, 1 - (dy / R) * (dy / R)));
+
+      // Determine dark range within this row
+      let darkLeft, darkRight;
+      if (isWaxing) {
+        // Lit = [xt .. circleRight], Dark = [circleLeft .. xt]
+        darkLeft  = Math.ceil(circleLeft);
+        darkRight = Math.floor(Math.min(xt, circleRight));
+      } else {
+        // Lit = [circleLeft .. xt], Dark = [xt .. circleRight]
+        darkLeft  = Math.ceil(Math.max(xt, circleLeft));
+        darkRight = Math.floor(circleRight);
+      }
+
+      for (let px = Math.ceil(circleLeft); px <= Math.floor(circleRight); px++) {
+        if (px >= darkLeft && px <= darkRight) {
+          const i = (py * W + px) * 4;
+          d[i]=DARK[0]; d[i+1]=DARK[1]; d[i+2]=DARK[2]; d[i+3]=255;
+        }
+      }
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+
+  // Rim
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,240,0.12)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── Draw mini phase dots (same scanline logic, small canvas) ─────────────────
+function drawMiniMoon(canvas, illumination, isWaxing) {
+  const ctx = canvas.getContext('2d');
+  const W = 28, H = 28, R = 12;
+  const cx = W / 2, cy = H / 2;
+  ctx.clearRect(0, 0, W, H);
+
+  const illum = illumination / 100;
+
+  // Fill entire circle with either dark or lit color first
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.fillStyle = illum > 0.005 ? '#d4cfbf' : '#0a0a1f';
+  ctx.fill();
+
+  if (illum <= 0.005 || illum >= 0.995) return;
+
+  // Apply shadow via scanlines
+  const pa = Math.acos(Math.max(-1, Math.min(1, 1 - 2 * illum)));
+  const tx = R * Math.cos(pa) * (isWaxing ? 1 : -1);
+  const DARK = [10, 10, 31];
+  const imgData = ctx.getImageData(0, 0, W, H);
+  const d = imgData.data;
+
+  for (let py = 0; py < H; py++) {
+    const dy = py - cy;
+    if (Math.abs(dy) > R) continue;
+    const hw = Math.sqrt(Math.max(0, R * R - dy * dy));
+    const circleLeft  = cx - hw;
+    const circleRight = cx + hw;
+    const xt = cx + tx * Math.sqrt(Math.max(0, 1 - (dy / R) * (dy / R)));
+
+    let darkLeft, darkRight;
+    if (isWaxing) {
+      darkLeft  = Math.ceil(circleLeft);
+      darkRight = Math.floor(Math.min(xt, circleRight));
+    } else {
+      darkLeft  = Math.ceil(Math.max(xt, circleLeft));
+      darkRight = Math.floor(circleRight);
+    }
+
+    for (let px = Math.ceil(circleLeft); px <= Math.floor(circleRight); px++) {
+      if (px >= darkLeft && px <= darkRight) {
+        const i = (py * W + px) * 4;
+        d[i]=DARK[0]; d[i+1]=DARK[1]; d[i+2]=DARK[2]; d[i+3]=255;
+      }
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+// Phase strip — representative illumination values per phase
+// Waxing: lit side is RIGHT. Waning: lit side is LEFT.
+const PHASE_STRIP = [
+  { name: 'New',          illum: 0,   waxing: true  },
+  { name: 'Waxing Cres.', illum: 12,  waxing: true  },
+  { name: 'First Qtr',    illum: 50,  waxing: true  },
+  { name: 'Waxing Gib.',  illum: 85,  waxing: true  },
+  { name: 'Full',         illum: 100, waxing: true  },
+  { name: 'Waning Gib.',  illum: 85,  waxing: false },
+  { name: 'Last Qtr',     illum: 50,  waxing: false },
+  { name: 'Waning Cres.', illum: 12,  waxing: false }
+];
+
+function buildPhaseStrip(activeIndex) {
+  const container = document.getElementById('phase-dots');
+  container.innerHTML = '';
+  PHASE_STRIP.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'phase-dot-item';
+
+    const dot = document.createElement('div');
+    dot.className = 'phase-dot' + (i === activeIndex ? ' active' : '');
+
+    const mini = document.createElement('canvas');
+    mini.width = 28;
+    mini.height = 28;
+    dot.appendChild(mini);
+
+    const label = document.createElement('div');
+    label.className = 'phase-dot-name' + (i === activeIndex ? ' active' : '');
+    label.textContent = p.name;
+
+    item.appendChild(dot);
+    item.appendChild(label);
+    container.appendChild(item);
+
+    requestAnimationFrame(() => drawMiniMoon(mini, p.illum, p.waxing));
+  });
+}
+
+// ── Main read function ────────────────────────────────────────────────────────
+function readTheMoon() {
+  const input = document.getElementById('date-input').value;
+  if (!input) {
+    document.getElementById('date-input').focus();
+    return;
+  }
+
+  const parts = input.split('-');
+  const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+  const { illumination, phaseIndex, isWaxing } = getMoonData(date);
+  const phase = PHASES[phaseIndex];
+  const month = MONTHS[date.getMonth()];
+
+  // Date display
+  const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('date-display').textContent = dateStr;
+
+  // Phase name
+  document.getElementById('phase-name').innerHTML = `<span>${phase.name}</span>`;
+
+  // Illumination
+  const illumRounded = Math.round(illumination);
+  document.getElementById('illum-pct').textContent = illumRounded + '%';
+  setTimeout(() => {
+    document.getElementById('illum-fill').style.width = illumRounded + '%';
+  }, 100);
+
+  // Moon graphic
+  drawMoon(illumination, isWaxing);
+
+  // Phase strip
+  buildPhaseStrip(phaseIndex);
+
+  // Energy card
+  document.getElementById('energy-title').textContent = phase.energy_title;
+  document.getElementById('energy-body').textContent = phase.energy_body;
+
+  // Action card
+  document.getElementById('action-title').textContent = phase.action_title;
+  document.getElementById('action-body').textContent = phase.action_body;
+
+  // Month card
+  document.getElementById('month-icon').textContent = month.icon;
+  document.getElementById('month-label').textContent = month.name + ' Moon Energy';
+  document.getElementById('month-title').textContent = month.title;
+  document.getElementById('month-body').textContent = month.body;
+
+  // Affirmation
+  document.getElementById('affirmation').textContent = phase.affirmation;
+
+  // Show result
+  const result = document.getElementById('result');
+  result.classList.remove('visible');
+  void result.offsetWidth;
+  result.classList.add('visible');
+  setTimeout(() => {
+    result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+// Set today as default
+(function() {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, '0');
+  const d = String(today.getDate()).padStart(2, '0');
+  document.getElementById('date-input').value = `${y}-${m}-${d}`;
+})();
+
+// Allow Enter key
+document.getElementById('date-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') readTheMoon();
+});
+</script>
+</body>
+</html>
