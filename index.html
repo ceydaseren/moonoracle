@@ -118,10 +118,13 @@ canvas#moon{border-radius:50%;display:block}
 .info-card.month{border-color:rgba(128,81,200,0.22)}
 .info-card.month::after{content:'';position:absolute;bottom:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(128,81,200,0.09),transparent 70%)}
 
-/* Affirmation */
-.affirmation-card{background:linear-gradient(135deg,rgba(128,81,200,0.1) 0%,rgba(28,214,231,0.06) 100%);border:1px solid rgba(128,81,200,0.22);border-radius:18px;padding:30px 28px;text-align:center;margin-bottom:16px}
-.affirmation-card p{font-family:'Fraunces',serif;font-size:20px;font-weight:300;font-style:italic;color:var(--text);line-height:1.6}
-.affirmation-label{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:14px;display:block;opacity:0.8}
+/* Next steps */
+.steps-card{background:linear-gradient(135deg,rgba(128,81,200,0.1) 0%,rgba(28,214,231,0.06) 100%);border:1px solid rgba(128,81,200,0.22);border-radius:18px;padding:28px 26px;margin-bottom:16px}
+.steps-label{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:18px;display:block;opacity:0.8}
+.step-item{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.step-item:last-child{margin-bottom:0}
+.step-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--magenta));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#fff;flex-shrink:0;margin-top:1px}
+.step-text{font-size:14px;color:var(--text);line-height:1.7;font-weight:300}
 
 /* Share button */
 .share-row{display:flex;justify-content:center;margin-bottom:20px}
@@ -258,9 +261,16 @@ canvas#moon{border-radius:50%;display:block}
       </div>
     </div>
 
-    <div class="affirmation-card">
-      <span class="affirmation-label">✦ Moon Mantra ✦</span>
-      <p id="affirmation"></p>
+    <div class="steps-card">
+      <span class="steps-label">✦ Your Next Steps ✦</span>
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-text" id="step1"></div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-text" id="step2"></div>
+      </div>
     </div>
 
     <div class="share-row">
@@ -279,67 +289,75 @@ canvas#moon{border-radius:50%;display:block}
 const PHASES = [
   { name:'New Moon', emoji:'🌑',
     energy_title:'Fertile Darkness & New Beginnings',
-    energy_body:'The slate is clean. This is the void before creation — potent, still, and full of potential. The universe is listening for what you want to call in.',
+    energy_body:'The slate is clean. This is the void before creation, potent, still, and full of potential. The universe is listening for what you want to call in.',
     action_title:'Plant your seeds',
     action_body:'Set clear intentions. Journal what you wish to create, feel, or become in the cycle ahead. This is the most powerful time to decide your next timeline.',
-    affirmation:'"I am open to new beginnings. I plant my intentions in fertile ground and trust the universe to grow them into form."' },
+    step1:'Grab a journal and write down one thing you really want to happen this month. Be as specific as you can, like you are placing an order with the universe.',
+    step2:'Light a candle tonight and sit quietly for five minutes. Just breathe and imagine how good it will feel when that thing comes true.' },
   { name:'Waxing Crescent', emoji:'🌒',
     energy_title:'Stirring Energy & Early Momentum',
-    energy_body:'The first light appears. Your intentions are taking root beneath the surface. There is a quiet building of energy — like a breath before a leap.',
+    energy_body:'The first light appears. Your intentions are taking root beneath the surface. There is a quiet building of energy, like a breath before a leap.',
     action_title:'Take inspired first steps',
-    action_body:'Act on the intentions you set. Small aligned actions now compound powerfully. Trust the pulls you feel even if the whole path isn\'t visible.',
-    affirmation:'"Every small step I take is building the life I have chosen. I trust the momentum that is already in motion."' },
+    action_body:'Act on the intentions you set. Small aligned actions now compound powerfully. Trust the pulls you feel even if the whole path is not yet visible.',
+    step1:'Pick one tiny action today that moves toward what you set your intention on. Send the message, book the call, write the first sentence. Small steps count big right now.',
+    step2:'Notice what feels exciting or nudging you forward and follow that feeling, even if it seems random. The moon is helping you build momentum.' },
   { name:'First Quarter', emoji:'🌓',
     energy_title:'Action, Decision & Commitment',
-    energy_body:'Tension meets opportunity. This is the halfway point between wish and fullness — a push to overcome inertia and commit. The energy is dynamic and activating.',
+    energy_body:'Tension meets opportunity. This is the halfway point between wish and fullness, a push to overcome inertia and commit. The energy is dynamic and activating.',
     action_title:'Face what is holding you back',
-    action_body:'Notice resistance and move through it anyway. Decisions made now gain power. What do you need to choose to stay on your chosen timeline?',
-    affirmation:'"I choose my timeline boldly. I face challenges as proof of my expansion, not signs to retreat."' },
+    action_body:'Notice resistance and move through it anyway. Decisions made now gain power. What do you need to choose to stay on your chosen path?',
+    step1:'Write down the one decision you have been avoiding. Then make it today. The moon is giving you extra courage and clarity right now, so use it.',
+    step2:'If something feels hard or uncomfortable today, do not back away from it. That friction is actually the energy pushing you to grow. Lean in.' },
   { name:'Waxing Gibbous', emoji:'🌔',
     energy_title:'Refinement & Magnetism Rising',
-    energy_body:'You are almost there. The energy is building to a peak — magnetic, refining, pulling your desires closer. This is a time of fine-tuning and elevated vibration.',
+    energy_body:'You are almost there. The energy is building to a peak, magnetic and refining, pulling your desires closer. This is a time of fine-tuning and elevated vibration.',
     action_title:'Adjust and elevate',
-    action_body:'Refine your approach. Do your practices with presence. Embody the version of you who already has what you\'re calling in. Feel it fully.',
-    affirmation:'"I am becoming more magnetic with every breath. What I desire is moving toward me as I align myself to receive it."' },
+    action_body:'Refine your approach. Do your practices with presence. Embody the version of you who already has what you are calling in. Feel it fully.',
+    step1:'Look at what you are working toward and ask: what is one small thing I can make even better today? Polish it, tighten it, or level it up.',
+    step2:'Spend a few minutes today acting, dressing, or speaking like the version of you who already has the thing you want. Let yourself feel that version of yourself for real.' },
   { name:'Full Moon', emoji:'🌕',
     energy_title:'Peak Illumination & Manifestation',
-    energy_body:'Everything is lit. The full moon reveals what has been growing in the shadows — both blessings and what is no longer aligned. Emotions run high; sensitivity is heightened.',
-    action_title:'Celebrate & release',
-    action_body:'Acknowledge how far you\'ve come. Release what is complete. Charge your crystals, cleanse your space, and let yourself feel the fullness of where you are.',
-    affirmation:'"I am in full bloom. I release all that is complete and I open my hands to receive the abundance that is already mine."' },
+    energy_body:'Everything is lit. The full moon reveals what has been growing in the shadows, both blessings and what is no longer aligned. Emotions run high and sensitivity is heightened.',
+    action_title:'Celebrate and release',
+    action_body:'Acknowledge how far you have come. Release what is complete. Charge your crystals, cleanse your space, and let yourself feel the fullness of where you are.',
+    step1:'Write a list of everything you are grateful for right now, big and small. The full moon amplifies gratitude and turns it into a magnet for more good things.',
+    step2:'Write down one thing you are ready to let go of, something that has been taking up space in your head or heart. Then rip up the paper or safely burn it as a symbol of release.' },
   { name:'Waning Gibbous', emoji:'🌖',
     energy_title:'Integration & Gratitude',
-    energy_body:'The peak has passed and wisdom is settling in. This is a time to integrate the gifts of the full moon cycle — to give back, share, and deepen understanding.',
+    energy_body:'The peak has passed and wisdom is settling in. This is a time to integrate what the full moon brought up, to give back, share, and deepen your understanding.',
     action_title:'Share and reflect',
     action_body:'What have you learned this cycle? Share your gifts, offer your insights to others, and practice deep gratitude for what has manifested.',
-    affirmation:'"I am grateful for all that has come. I integrate my growth and share my light freely with the world."' },
+    step1:'Share something helpful or uplifting with someone today, a tip, a kind word, or something you have learned. Giving feels especially good right now.',
+    step2:'Sit down and ask yourself: what did I learn about myself this past two weeks? Write two or three sentences. This reflection locks in your growth.' },
   { name:'Last Quarter', emoji:'🌗',
     energy_title:'Surrender & Conscious Release',
-    energy_body:'The energy turns inward and backward. This is the sacred art of letting go — releasing patterns, relationships, beliefs, and identities that no longer belong on your next timeline.',
+    energy_body:'The energy is turning inward. This is the sacred practice of letting go, releasing patterns, stories, and old versions of yourself that no longer belong on your next chapter.',
     action_title:'Let go intentionally',
     action_body:'Write a release list. What are you ready to leave behind? Limiting beliefs, old stories, outdated versions of yourself. Consciously choose to unhook.',
-    affirmation:'"I release with love and ease. What no longer serves me dissolves and makes space for what I am becoming."' },
+    step1:'Make a list of things you are done with. Old beliefs, habits, worries, or situations that are draining you. Write them all down without judging yourself.',
+    step2:'For each thing on your list, say out loud: "I release this. It no longer belongs to me." Then close the notebook. You do not need to figure out how to let go. Just decide to.' },
   { name:'Waning Crescent', emoji:'🌘',
     energy_title:'Rest, Reset & Inner Wisdom',
-    energy_body:'The cycle is completing. This is the most restorative phase — a call to rest deeply, go inward, and allow the void to restore you before the next new beginning.',
+    energy_body:'The cycle is completing. This is the most restorative phase, a call to rest deeply, go inward, and let yourself be still before the next new beginning arrives.',
     action_title:'Rest and receive',
     action_body:'Slow down. Dream. Meditate. Listen to your intuition without the pressure to act. Your inner knowing is loudest now. Trust the whispers.',
-    affirmation:'"I honour the sacred pause. In stillness I receive. In rest I prepare for the magnificent new cycle that is coming."' }
+    step1:'Give yourself permission to do less today. Rest is not lazy right now, it is exactly what the energy is asking for. Nap, go slow, or simply sit outside.',
+    step2:'Before you sleep tonight, ask yourself a question you want guidance on. Then let it go and trust that the answer will come in a dream, a feeling, or a quiet moment tomorrow.' }
 ];
 
 const MONTHS = [
-  { name:'January', icon:'❄️', title:'Wolf Moon — Clarity & Vision', body:'The wolf howls under the winter sky, calling you to define what you truly hunger for this year. January asks for bold, clear vision. Set your highest intentions for the full year ahead.' },
-  { name:'February', icon:'🌱', title:'Snow Moon — Patience & Preparation', body:'Beneath the frozen ground, seeds wait patiently for spring. February is about trusting the unseen process. The work you do internally now will bloom magnificently later.' },
-  { name:'March', icon:'🌸', title:'Worm Moon — Rebirth & Emergence', body:'The earth stirs and life returns. March carries the energy of resurrection — emerging from winter\'s cocoon as a newly formed version of yourself. Honour your own becoming.' },
-  { name:'April', icon:'🌦️', title:'Pink Moon — Growth Through Challenge', body:'April showers invite growth you didn\'t plan for. The tensions of this month are actually accelerators. Let what is uncomfortable stretch you open rather than close you down.' },
-  { name:'May', icon:'🌺', title:'Flower Moon — Abundance & Blossoming', body:'May is one of the most abundant months in the lunar calendar. Everything you\'ve been cultivating is ready to bloom. Say yes to expansion, beauty, and receiving more than you asked for.' },
-  { name:'June', icon:'☀️', title:'Strawberry Moon — Sweetness & Fruition', body:'The first harvest arrives and invites you to taste the sweetness of your own efforts. June reminds you to savour life now — not when conditions are perfect, but exactly as things are.' },
-  { name:'July', icon:'🦌', title:'Buck Moon — Strength & Renewal', body:'The buck\'s antlers grow strong and purposeful. July is about coming into your full power — stepping into leadership, owning your gifts, and shedding what weakened you.' },
-  { name:'August', icon:'🌾', title:'Sturgeon Moon — Harvest & Acknowledgment', body:'Late summer calls for acknowledgment of all you have built. August asks you to take stock, celebrate your growth, and prepare for the deeper inner work of autumn ahead.' },
-  { name:'September', icon:'🍂', title:'Harvest Moon — Reaping What You Sowed', body:'The harvest moon illuminates exactly what your energy created this year. September is deeply clarifying — you see what aligned actions grew and where energy was scattered.' },
-  { name:'October', icon:'🎃', title:'Hunter\'s Moon — Depth & Shadow Work', body:'The veil thins and the deep truths surface. October is the most powerful month for shadow work — meeting your own darkness with compassion, integrating what you\'ve been avoiding.' },
-  { name:'November', icon:'🌫️', title:'Beaver Moon — Fortitude & Preparation', body:'The beaver builds its den before winter arrives. November asks you to strengthen your inner foundation — your mindset, your nervous system, your sacred practices.' },
-  { name:'December', icon:'⭐', title:'Cold Moon — Completion & Sacred Rest', body:'The year completes itself under a cold, crystalline sky. December is a time of profound stillness, deep gratitude, and releasing the entire cycle with love.' }
+  { name:'January', icon:'❄️', title:'Wolf Moon: Clarity & Vision', body:'The wolf howls under the winter sky, calling you to define what you truly hunger for this year. January asks for bold, clear vision. Set your highest intentions for the full year ahead.' },
+  { name:'February', icon:'🌱', title:'Snow Moon: Patience & Preparation', body:'Beneath the frozen ground, seeds wait patiently for spring. February is about trusting the unseen process. The work you do internally now will bloom magnificently later.' },
+  { name:'March', icon:'🌸', title:'Worm Moon: Rebirth & Emergence', body:'The earth stirs and life returns. March carries the energy of resurrection: emerging from winter\'s cocoon as a newly formed version of yourself. Honour your own becoming.' },
+  { name:'April', icon:'🌦️', title:'Pink Moon: Growth Through Challenge', body:'April showers invite growth you didn\'t plan for. The tensions of this month are actually accelerators. Let what is uncomfortable stretch you open rather than close you down.' },
+  { name:'May', icon:'🌺', title:'Flower Moon: Abundance & Blossoming', body:'May is one of the most abundant months in the lunar calendar. Everything you\'ve been cultivating is ready to bloom. Say yes to expansion, beauty, and receiving more than you asked for.' },
+  { name:'June', icon:'☀️', title:'Strawberry Moon: Sweetness & Fruition', body:'The first harvest arrives and invites you to taste the sweetness of your own efforts. June reminds you to savour life now: not when conditions are perfect, but exactly as things are.' },
+  { name:'July', icon:'🦌', title:'Buck Moon: Strength & Renewal', body:'The buck\'s antlers grow strong and purposeful. July is about coming into your full power: stepping into leadership, owning your gifts, and shedding what weakened you.' },
+  { name:'August', icon:'🌾', title:'Sturgeon Moon: Harvest & Acknowledgment', body:'Late summer calls for acknowledgment of all you have built. August asks you to take stock, celebrate your growth, and prepare for the deeper inner work of autumn ahead.' },
+  { name:'September', icon:'🍂', title:'Harvest Moon: Reaping What You Sowed', body:'The harvest moon illuminates exactly what your energy created this year. September is deeply clarifying: you see what aligned actions grew and where energy was scattered.' },
+  { name:'October', icon:'🎃', title:'Hunter\'s Moon: Depth & Shadow Work', body:'The veil thins and the deep truths surface. October is the most powerful month for shadow work: meeting your own darkness with compassion, integrating what you\'ve been avoiding.' },
+  { name:'November', icon:'🌫️', title:'Beaver Moon: Fortitude & Preparation', body:'The beaver builds its den before winter arrives. November asks you to strengthen your inner foundation: your mindset, your nervous system, your sacred practices.' },
+  { name:'December', icon:'⭐', title:'Cold Moon: Completion & Sacred Rest', body:'The year completes itself under a cold, crystalline sky. December is a time of profound stillness, deep gratitude, and releasing the entire cycle with love.' }
 ];
 
 const PHASE_STRIP = [
@@ -396,7 +414,7 @@ function getNextPhase(date) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// MOON DRAWING (scanline — pixel perfect)
+// MOON DRAWING (scanline: pixel perfect)
 // ═══════════════════════════════════════════════════════════
 function paintMoonSurface(ctx, cx, cy, R) {
   const g = ctx.createRadialGradient(cx-R*0.2, cy-R*0.2, R*0.05, cx, cy, R);
@@ -633,7 +651,9 @@ function readTheMoon() {
   document.getElementById('month-label').textContent=month.name+' Moon Energy';
   document.getElementById('month-title').textContent=month.title;
   document.getElementById('month-body').textContent=month.body;
-  document.getElementById('affirmation').textContent=phase.affirmation;
+  document.getElementById('affirmation') && (document.getElementById('affirmation').textContent = '');
+  document.getElementById('step1').textContent = phase.step1;
+  document.getElementById('step2').textContent = phase.step2;
   // Refresh calendar selection highlight
   renderCalendar();
   const result=document.getElementById('result');
@@ -649,10 +669,10 @@ function saveReading() {
   const date=document.getElementById('date-display').textContent;
   const energy=document.getElementById('energy-title').textContent;
   const action=document.getElementById('action-title').textContent;
-  const affirmation=document.getElementById('affirmation').textContent;
-  const illum=document.getElementById('illum-pct').textContent;
   const next=document.getElementById('next-phase-tag').textContent;
-  const text=`✦ Moon Oracle Reading ✦\n\n${date}\n\n🌙 Phase: ${phase}\n💫 Illumination: ${illum}\n${next}\n\n🌊 Energy: ${energy}\n✨ Action: ${action}\n\n${affirmation}\n\n— Moon Oracle by Ceyda Seren`;
+  const step1 = document.getElementById('step1').textContent;
+  const step2 = document.getElementById('step2').textContent;
+  const text=`✦ Moon Oracle Reading ✦\n\n${date}\n\n🌙 Phase: ${phase}\n💫 Illumination: ${illum}\n${next}\n\n🌊 Energy: ${energy}\n✨ Action: ${action}\n\nYour Next Steps:\n1. ${step1}\n2. ${step2}\n\n— Moon Oracle by Ceyda Seren`;
   if(navigator.clipboard){
     navigator.clipboard.writeText(text).then(()=>showToast());
   } else { showToast(); }
